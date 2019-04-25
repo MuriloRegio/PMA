@@ -3,23 +3,31 @@ import time
 
 
 def getAvgTime(objFile, n_its, n_threads, kargs):
-	total = 0
+	exec_times = []
+
 	for _ in range(n_its):
 		then = time.time()
 		os.system("./{} {} {}".format(objFile, kargs, n_threads))
 		now = time.time()
-		total += now-then
+		exec_times.append(now-then)
 
-	return total/n_its
+	avg = sum(exec_times)/n_its
+	var = sum([(t - avg)**2 for t in exec_times])/max(1,n_its-1) # takes the max to avoid division by zero
+	std_dev = var ** (1/2)
+
+	return avg, var, std_dev
 
 def runMultiple(infile,n_its,max_t,hthreads,kargs):
 	threads = list(range(1,max_t+1)) + hthreads
 	results = {}
+	statistics = {}
 
 	for i in threads:
-		results[str(i)] = getAvgTime(infile,n_its,i,kargs)
+		avg, var, std_dev = getAvgTime(infile,n_its,i,kargs)
+		results[str(i)] = avg
+		statistics[str(i)] = {"average":avg, "variance":var, "standart deviation":std_dev}
 
-	return results
+	return results, statistics
 	
 
 if __name__ == "__main__":
@@ -82,9 +90,19 @@ if __name__ == "__main__":
 
 		infile = filename
 
+	results = runMultiple(infile,n_its,max_t,hthreads,kargs)
+	avg_time = results[0]
+	statistics = results[1]
+
 	with open(infile+"_results.json","w") as outfile:
 		json.dump(
-			runMultiple(infile,n_its,max_t,hthreads,kargs),
+			avg_time,
 			outfile
 		)
-	print ("Successfully wrote file '{}'!".format(infile+"_results.json"))
+
+	with open(infile+"_statistics.json","w") as outfile:
+		json.dump(
+			statistics,
+			outfile
+		)
+	print ("Successfully wrote files '{0}_results.json' and '{0}_statistics.json'!".format(infile))
