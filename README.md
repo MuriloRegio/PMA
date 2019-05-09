@@ -1,4 +1,4 @@
-# parallelizationMetricsAnalysis
+# Parallelization Metrics Analysis
 
 This project aims to provide a easy way to extract the execution information from a parallel program when the same is ran with different amount of threads.
 The extracted information can also be used to build a efficiency graph to show the relationship between the number of threads and the relative efficiency and speed-up (compared to the non-parallel execution).
