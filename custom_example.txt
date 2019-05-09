@@ -1,0 +1,2 @@
+mpicc {} -o {}
+mpirun -np {2} {0} {1}

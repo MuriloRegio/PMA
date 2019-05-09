@@ -1,13 +1,14 @@
-import os
+import exec_manager
 import time
 
 
-def getAvgTime(objFile, n_its, n_threads, kargs):
+def getAvgTime(objFile, n_its, n_threads, kargs, execution_manager):
 	exec_times = []
 
 	for _ in range(n_its):
 		then = time.time()
-		os.system("./{} {} {}".format(objFile, kargs, n_threads))
+		# os.system("./{} {} {}".format(objFile, kargs, n_threads))
+		execution_manager.run(objFile, n_threads, kargs)
 		now = time.time()
 		exec_times.append(now-then)
 
@@ -17,13 +18,13 @@ def getAvgTime(objFile, n_its, n_threads, kargs):
 
 	return avg, var, std_dev
 
-def runMultiple(infile,n_its,max_t,hthreads,kargs):
+def runMultiple(infile, n_its, max_t, hthreads, kargs, execution_manager):
 	threads = list(range(1,max_t+1)) + hthreads
 	results = {}
 	statistics = {}
 
 	for i in threads:
-		avg, var, std_dev = getAvgTime(infile,n_its,i,kargs)
+		avg, var, std_dev = getAvgTime(infile,n_its,i,kargs,execution_manager)
 		results[str(i)] = avg
 		statistics[str(i)] = {"average":avg, "variance":var, "standart deviation":std_dev}
 
@@ -50,6 +51,9 @@ if __name__ == "__main__":
 
 	parser.add_argument('-o', dest='is_compiled', action='store_true',
 	                    help='Flag for informing that the file is object code.')
+
+	parser.add_argument('-c', dest='InfoFile', type=str, default="",
+	                    help='File for informing a different compilation and execution method.')
 
 	parser.add_argument('file', metavar='FileName', type=str,
 	                    help='The relative path to the file that contains either source or object code.')
@@ -82,15 +86,17 @@ if __name__ == "__main__":
 		print ("Invalid number of threads!")
 		exit(1)
 
+	manager = exec_manager.my_runner(args.InfoFile)
 
 	if not args.is_compiled:
-		filename = infile[:infile.rindex('.')]
+		# filename = infile[:infile.rindex('.')]
+		# os.system("gcc {} -fopenmp -o {}".format(infile,filename))
+		# infile = filename
 
-		os.system("gcc {} -fopenmp -o {}".format(infile,filename))
+		infile = manager.compile(infile)
 
-		infile = filename
 
-	results = runMultiple(infile,n_its,max_t,hthreads,kargs)
+	results = runMultiple(infile,n_its,max_t,hthreads,kargs, manager)
 	avg_time = results[0]
 	statistics = results[1]
 
